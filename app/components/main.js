@@ -44,7 +44,7 @@ export default class Main extends React.Component {
         return (
             <View style={styles.container}>
                 <View style={styles.header}>
-                    <Text style={styles.headerText}>Birthday Card</Text>
+                    <Text style={styles.headerText}>Birthday Card Notes</Text>
                 </View>
 
                 <ScrollView style={styles.scrollContainer}>
@@ -87,7 +87,7 @@ export default class Main extends React.Component {
                 </View>
 
                 <TouchableOpacity onPress={this.addTask.bind(this)} style={styles.addButton}>
-                    <Text style={styles.addButtonText}>Add Task</Text>
+                    <Text style={styles.addButtonText}>Add Birthday</Text>
                 </TouchableOpacity>
 
                 {/* Add button to pick an image */}
