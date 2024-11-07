@@ -8,7 +8,7 @@ import {
     TouchableOpacity,
     Image,
 } from 'react-native';
-import { launchImageLibrary } from 'react-native-image-picker';
+import * as ImagePicker from 'expo-image-picker'
 import Note from './note';
 
 export default class Main extends React.Component {
@@ -162,21 +162,30 @@ export default class Main extends React.Component {
         this.setState({ noteArray: this.state.noteArray });
     }
 
-    selectImage() {
-        launchImageLibrary({}, (response) => {
-            if (!response.didCancel && response.assets && response.assets.length > 0) {
-                this.setState({ imageUri: response.assets[0].uri });
-            }
+    // Function for image selection in the gallery 
+    selectImage = async () => {
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            quality: 1,
         });
-    }
-
-    selectDecoration() {
-        launchImageLibrary({}, (response) => {
-            if (!response.didCancel && response.assets && response.assets.length > 0) {
-                this.setState({ decorationUri: response.assets[0].uri });
-            }
+    
+        if (!result.canceled) {
+            this.setState({ imageUri: result.uri });
+        }
+    };
+    
+    selectDecoration = async () => {
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            quality: 1,
         });
-    }
+    
+        if (!result.canceled) {
+            this.setState({ decorationUri: result.uri });
+        }
+    };
 
     toggleEditMode(key) {
         const newNotes = [...this.state.noteArray];
