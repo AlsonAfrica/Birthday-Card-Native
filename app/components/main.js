@@ -7,13 +7,11 @@ import {
     ScrollView,
     TouchableOpacity,
     Image,
-    Button
 } from 'react-native';
-import { launchImageLibrary } from 'react-native-image-picker'; // Add image picker
+import { launchImageLibrary } from 'react-native-image-picker';
 import Note from './note';
 
 export default class Main extends React.Component {
-
     constructor(props) {
         super(props);
 
@@ -23,9 +21,14 @@ export default class Main extends React.Component {
             birthdayMonth: '',
             wish: '',
             goals: '',
-            imageUri: null, // Store selected image URI
-            noteColor: '#FFFFFF', // Default color for note
-        }
+            imageUri: null,
+            decorationUri: null,
+            noteColor: '#FFFFFF',
+            fontSize: 16,
+            fontColor: '#333333',
+            fontStyle: 'normal',
+            fontWeight: 'normal',
+        };
     }
 
     render() {
@@ -37,6 +40,12 @@ export default class Main extends React.Component {
                     val={val}
                     deleteMethod={() => this.deleteNote(key)}
                     changeColorMethod={() => this.changeNoteColor(key)}
+                    fontSize={this.state.fontSize}
+                    fontColor={this.state.fontColor}
+                    fontWeight={this.state.fontWeight}
+                    fontStyle={this.state.fontStyle}
+                    editMethod={(field, text) => this.updateNoteText(key, field, text)}
+                    toggleEditMode={() => this.toggleEditMode(key)}  // Pass toggleEditMode to each Note
                 />
             );
         });
@@ -51,7 +60,6 @@ export default class Main extends React.Component {
                     {notes}
                 </ScrollView>
 
-                {/* Note Input Fields */}
                 <View style={styles.footer}>
                     <TextInput
                         style={styles.textInput}
@@ -60,7 +68,6 @@ export default class Main extends React.Component {
                         placeholder='Name and Surname'
                         placeholderTextColor='#B0B0B0'
                     />
-
                     <TextInput
                         style={styles.textInput}
                         onChangeText={(birthdayMonth) => this.setState({ birthdayMonth })}
@@ -68,7 +75,6 @@ export default class Main extends React.Component {
                         placeholder='Birthday Month'
                         placeholderTextColor='#B0B0B0'
                     />
-
                     <TextInput
                         style={styles.textInput}
                         onChangeText={(wish) => this.setState({ wish })}
@@ -76,7 +82,6 @@ export default class Main extends React.Component {
                         placeholder='What is your wish?'
                         placeholderTextColor='#B0B0B0'
                     />
-
                     <TextInput
                         style={styles.textInput}
                         onChangeText={(goals) => this.setState({ goals })}
@@ -90,13 +95,42 @@ export default class Main extends React.Component {
                     <Text style={styles.addButtonText}>Add Birthday</Text>
                 </TouchableOpacity>
 
-                {/* Add button to pick an image */}
                 <TouchableOpacity onPress={this.selectImage.bind(this)} style={styles.addImageButton}>
                     <Text style={styles.addButtonText}>Pick Image</Text>
                 </TouchableOpacity>
 
-                {/* Display selected image */}
+                <TouchableOpacity onPress={this.selectDecoration.bind(this)} style={styles.addDecorationButton}>
+                    <Text style={styles.addButtonText}>Pick Decoration</Text>
+                </TouchableOpacity>
+
                 {this.state.imageUri && <Image source={{ uri: this.state.imageUri }} style={styles.imagePreview} />}
+                {this.state.decorationUri && <Image source={{ uri: this.state.decorationUri }} style={styles.decorationPreview} />}
+                
+                <View style={styles.formattingContainer}>
+                    {/* <Text>Font Size:</Text>
+                    <TouchableOpacity onPress={() => this.setState({ fontSize: this.state.fontSize + 2 })}>
+                        <Text style={styles.button}>A+</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => this.setState({ fontSize: this.state.fontSize - 2 })}>
+                        <Text style={styles.button}>A-</Text>
+                    </TouchableOpacity> */}
+
+                    <Text>Font Color:</Text>
+                    <TouchableOpacity onPress={() => this.setState({ fontColor: '#FF6347' })}>
+                        <Text style={[styles.button, { color: '#FF6347' }]}>Red</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => this.setState({ fontColor: '#4A90E2' })}>
+                        <Text style={[styles.button, { color: '#4A90E2' }]}>Blue</Text>
+                    </TouchableOpacity>
+
+                    <Text>Style:</Text>
+                    <TouchableOpacity onPress={() => this.setState({ fontWeight: this.state.fontWeight === 'bold' ? 'normal' : 'bold' })}>
+                        <Text style={[styles.button, { fontWeight: 'bold' }]}>Bold</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => this.setState({ fontStyle: this.state.fontStyle === 'italic' ? 'normal' : 'italic' })}>
+                        <Text style={[styles.button, { fontStyle: 'italic' }]}>Italic</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
         );
     }
@@ -113,11 +147,13 @@ export default class Main extends React.Component {
                 'wish': this.state.wish,
                 'goals': this.state.goals,
                 'image': this.state.imageUri,
-                'color': this.state.noteColor // Save the selected color for each note
+                'decoration': this.state.decorationUri,
+                'color': this.state.noteColor,
+                'isEditing': false,  // Initially, notes are not in editing mode
             });
 
             this.setState({ noteArray: this.state.noteArray });
-            this.setState({ noteText: '', birthdayMonth: '', wish: '', goals: '', imageUri: null }); // Reset the input fields
+            this.setState({ noteText: '', birthdayMonth: '', wish: '', goals: '', imageUri: null, decorationUri: null });
         }
     }
 
@@ -128,16 +164,35 @@ export default class Main extends React.Component {
 
     selectImage() {
         launchImageLibrary({}, (response) => {
-            if (!response.didCancel) {
+            if (!response.didCancel && response.assets && response.assets.length > 0) {
                 this.setState({ imageUri: response.assets[0].uri });
             }
         });
     }
 
-    // Change color of the selected note
+    selectDecoration() {
+        launchImageLibrary({}, (response) => {
+            if (!response.didCancel && response.assets && response.assets.length > 0) {
+                this.setState({ decorationUri: response.assets[0].uri });
+            }
+        });
+    }
+
+    toggleEditMode(key) {
+        const newNotes = [...this.state.noteArray];
+        newNotes[key].isEditing = !newNotes[key].isEditing;  // Toggle the isEditing property
+        this.setState({ noteArray: newNotes });
+    }
+
+    updateNoteText(key, field, text) {
+        const updatedNotes = [...this.state.noteArray];
+        updatedNotes[key][field] = text; // Update the specific field in the note
+        this.setState({ noteArray: updatedNotes });
+    }
+
     changeNoteColor(key) {
         const newNoteArray = [...this.state.noteArray];
-        newNoteArray[key].color = '#FFD700'; // Change the color to gold as an example
+        newNoteArray[key].color = '#FFD700'; // Update the note color
         this.setState({ noteArray: newNoteArray });
     }
 }
@@ -176,43 +231,50 @@ const styles = StyleSheet.create({
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.1,
-        shadowRadius: 3,
+        shadowRadius: 5,
     },
     addButton: {
-        backgroundColor: '#4A90E2',
-        paddingVertical: 15,
-        borderRadius: 25,
-        marginBottom: 15,
-        alignItems: 'center',
-        marginHorizontal: 50,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.2,
-        shadowRadius: 6,
+        backgroundColor: '#FF6347',
+        padding: 15,
+        borderRadius: 10,
+        margin: 10,
     },
     addButtonText: {
         color: '#fff',
-        fontSize: 18,
-        fontWeight: 'bold',
+        textAlign: 'center',
+        fontSize: 16,
     },
     addImageButton: {
-        backgroundColor: '#FF6347',
-        paddingVertical: 15,
-        borderRadius: 25,
-        marginBottom: 15,
-        alignItems: 'center',
-        marginHorizontal: 50,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.2,
-        shadowRadius: 6,
+        backgroundColor: '#4A90E2',
+        padding: 15,
+        borderRadius: 10,
+        margin: 10,
+    },
+    addDecorationButton: {
+        backgroundColor: '#FF9F00',
+        padding: 15,
+        borderRadius: 10,
+        margin: 10,
     },
     imagePreview: {
-        width: 150,
-        height: 150,
-        marginTop: 10,
-        borderRadius: 10,
-        alignSelf: 'center',
-        resizeMode: 'cover',
+        width: 100,
+        height: 100,
+        marginBottom: 10,
+    },
+    decorationPreview: {
+        width: 50,
+        height: 50,
+        marginBottom: 10,
+    },
+    formattingContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 20,
+    },
+    button: {
+        color: '#4A90E2',
+        fontSize: 18,
+        padding: 5,
+        margin: 5,
     },
 });
