@@ -90,7 +90,7 @@ Before you can run the app, ensure you have the following installed:
 # Contacts
 email: nhlakaniphoradebe337@gmail.com
 
-github: 
+github: https://github.com/AlsonAfrica
 
 "Deligently Crafted and Designed by Nhlakanipho Alson Radebe"
 
